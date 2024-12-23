@@ -8,27 +8,33 @@
 </head>
 <body>
     <main class="calculator">
-        <div id="input">0</div>
-        <button id="delete">AC</button>
-        <button id="plus-minus">&#177;</button>
-        <button id="percent">%</button>
-        <button id="divide">&#247;</button>
-        <button id="seven">7</button>
-        <button id="eight">8</button>
-        <button id="nine">9</button>
-        <button id="multiply">&#215;</button>
-        <button id="four">4</button>
-        <button id="five">5</button>
-        <button id="six">6</button>
-        <button id="minus">-</button>
-        <button id="one">1</button>
-        <button id="two">2</button>
-        <button id="three">3</button>
-        <button id="plus">+</button>
-        <button id="mode">Basic</button>
-        <button id="zero">0</button>
-        <button id="decimal">.</button>
-        <button id="equal">=</button>
+        <div class="display">
+            <p class="input" id="input">0</p>
+            <p class="output" id="output"></p>
+        </div>
+        <div class="basic">
+            <button class="lightgrey" id="backspace">&#8592;</button>
+            <button class="lightgrey" id="left-bracket">(</button>
+            <button class="lightgrey" id="right-bracket">)</button>
+            <button class="orange" id="divide">&#247;</button>
+            <button class="grey" id="seven">7</button>
+            <button class="grey" id="eight">8</button>
+            <button class="grey" id="nine">9</button>
+            <button class="orange" id="multiply">&#215;</button>
+            <button class="grey" id="four">4</button>
+            <button class="grey" id="five">5</button>
+            <button class="grey" id="six">6</button>
+            <button class="orange" id="minus">-</button>
+            <button class="grey" id="one">1</button>
+            <button class="grey" id="two">2</button>
+            <button class="grey" id="three">3</button>
+            <button class="orange" id="plus">+</button>
+            <button class="grey" id="mode">Basic</button>
+            <button class="grey" id="zero">0</button>
+            <button class="grey" id="decimal">.</button>
+            <button class="orange" id="equal">=</button>
+        </div>
+        <div class="scientific"></div>
     </main>
 
     <script src="calculator.js"></script>

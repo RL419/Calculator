@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
 * {
     padding: 0;
     margin: 0;
@@ -5,26 +7,107 @@
 }
 
 body {
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 3rem;
-    /* background-color: black; */
+    font-family: "Inter", serif;
+    background-color: black;
+    color: white;
 
     display: flex;
     justify-content: center;
 }
 
-main {
+.calculator {
     height: 100vh;
     aspect-ratio: 1 / 2;
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr;
+    grid-template-rows: 3fr 5fr;
+    grid-template-columns: 1fr;
     gap: 1rem;
 }
 
-div {
+.display {
+    white-space: nowrap;
+    overflow: auto;
+    position: relative;
+}
+
+p {
+    white-space: nowrap;
+    font-size: 4rem;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    padding-right: 0.5rem;
+}
+
+.output {
+    display: none;
+}
+
+.show-result {
+    display: block;
+}
+
+.calculated {
+    color: rgb(141,141,147);
+    font-size: 2rem;
+    bottom: 5rem;
+}
+
+.basic {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 0.5rem;
+}
+
+button {
+    border-radius: 50%;
+    border-style: none;
+    font: inherit;
+    color: white;
+    font-size: 2rem;
+    cursor: pointer;
+}
+
+.grey {
+    background-color: rgb(42, 42, 44);
+}
+
+.lightgrey {
+    background-color: rgb(92, 92, 95);
+}
+
+.orange {
+    background-color: rgb(255, 159, 10);
+}
+
+.darkgrey {
+    background-color: rgb(28, 28, 29);
+}
+
+button.grey:hover, button.grey:active, button.grey:focus {
+    background-color: rgb(114, 114, 114);
+    transition: 0.3s;
+}
+
+button.lightgrey:hover, button.lightgrey:active, button.lightgrey:focus {
+    background-color: rgb(140, 140, 140);
+    transition: 0.3s;
+}
+
+button.orange:hover, button.orange:active, button.orange:focus {
+    background-color: rgb(252, 199, 141);
+    transition: 0.3s;
+}
+
+button.darkgrey:hover, button.grey:active, button.grey:focus {
+    background-color: rgb(76, 76, 76);
+    transition: 0.3s;
+}
+
+/* div {
     grid-column: 1 / 5;
     grid-row: 1 / 4;
     display: flex;
     justify-content: flex-end;
     align-items: end;
-}
+} */

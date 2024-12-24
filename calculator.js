@@ -2,8 +2,17 @@
 let currExpression = '';
 let unclosed_brackets = 0;
 let reset = false;
+let ifScientific = false;
 
-// html Elements
+
+// html divs
+const main = document.getElementById('calculator');
+const display = document.getElementById('display');
+const basic = document.getElementById('basic');
+const scientific = document.getElementById('scientific');
+
+
+// html Buttons
 const input = document.getElementById('input');
 const output = document.getElementById('output');
 
@@ -31,6 +40,8 @@ const rightBracketButton = document.getElementById('right-bracket');
 
 const equalButton = document.getElementById('equal');
 
+const changeModeButton = document.getElementById('mode');
+
 
 // Click event listeners for buttons
 divideButton.addEventListener('click', () => add_arithmatic('/'));
@@ -57,8 +68,10 @@ rightBracketButton.addEventListener('click', () => add_brackets(')'))
 
 equalButton.addEventListener('click', equal)
 
+changeModeButton.addEventListener('click', changeMode);
 
-// Keydown event listeners for buttons
+
+// Keydown event listener for buttons
 document.body.addEventListener('keydown', (event) => {
     if (is_number(event.key)) {
         add_number(event.key);
@@ -281,14 +294,19 @@ function resetDisplay() {
     reset = false;
 }
 
-// let mode = 'BASIC';
 
-// const changeModeButton = document.getElementById('mode');
-
-// function changeMode () {
-//     if (mode === 'BASIC') {
-//         mode = 'SCIENTIFIC';
-//         changeModeButton.innerHTML = mode;
-
-//     }
-// }
+function changeMode () {
+    if (!ifScientific) {
+        main.classList.add('scientific-calculator');
+        display.classList.add('display-scientific');
+        basic.classList.add('basic-scientific');
+        scientific.classList.add('show-scientific');
+        ifScientific = true;
+    } else {
+        main.classList.remove('scientific-calculator');
+        display.classList.remove('display-scientific');
+        basic.classList.remove('basic-scientific');
+        scientific.classList.remove('show-scientific');
+        ifScientific = false;
+    }
+}

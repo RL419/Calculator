@@ -7,12 +7,12 @@
     <title>Calculator</title>
 </head>
 <body>
-    <main class="calculator">
-        <div class="display">
+    <main class="calculator" id="calculator">
+        <div class="display" id="display">
             <p class="input" id="input">0</p>
             <p class="output" id="output"></p>
         </div>
-        <div class="basic">
+        <div class="basic-buttons" id="basic">
             <button class="lightgrey" id="backspace">&#8592;</button>
             <button class="lightgrey" id="left-bracket">(</button>
             <button class="lightgrey" id="right-bracket">)</button>
@@ -29,12 +29,33 @@
             <button class="grey" id="two">2</button>
             <button class="grey" id="three">3</button>
             <button class="orange" id="plus">+</button>
-            <button class="grey" id="mode">Basic</button>
+            <button class="grey" id="mode">Mode</button>
             <button class="grey" id="zero">0</button>
             <button class="grey" id="decimal">.</button>
             <button class="orange" id="equal">=</button>
         </div>
-        <div class="scientific"></div>
+        <div class="scientific-buttons" id="scientific">
+            <button class="darkgrey" id="radian-degree">Deg</button>
+            <button class="darkgrey" id="answer">ANS</button>
+            <button class="darkgrey" id="percent">%</button>
+            <button class="darkgrey" id="factorial">!</button>
+            <button class="darkgrey" id="squared">&#119909;<sup>2</sup></button>
+            <button class="darkgrey" id="power">&#119909;<sup>&#119910;</sup></button>
+            <button class="darkgrey" id="square-root">&#8730;&#119909;</button>
+            <button class="darkgrey" id="n-th-root"><sup><sup>&#119910;</sup></sup>&#8730;&#119909;</button>
+            <button class="darkgrey" id="log">log<sub>10</sub></button>
+            <button class="darkgrey" id="natural-log">ln</button>
+            <button class="darkgrey" id=""></button>
+            <button class="darkgrey" id=""></button>
+            <button class="darkgrey" id="sin">sin</button>
+            <button class="darkgrey" id="cos">cos</button>
+            <button class="darkgrey" id="tan">tan</button>
+            <button class="darkgrey" id="e"><i>e</i></button>
+            <button class="darkgrey" id="arcsin">sin<sup>-1</sup></button>
+            <button class="darkgrey" id="arccos">cos<sup>-1</sup></button>
+            <button class="darkgrey" id="arctan">tan<sup>-1</sup></button>
+            <button class="darkgrey" id="pi">&#960;</button>
+        </div>
     </main>
 
     <script src="calculator.js"></script>

@@ -6,6 +6,7 @@
     box-sizing: border-box;
 }
 
+/* LAYOUT OF PAGE */
 body {
     font-family: "Inter", serif;
     background-color: black;
@@ -16,49 +17,49 @@ body {
 }
 
 .calculator {
-    height: 100vh;
+    height: min(100vh, 200vw);
     aspect-ratio: 1 / 2;
     display: grid;
     grid-template-rows: 3fr 5fr;
     grid-template-columns: 1fr;
-    gap: 1rem;
+    gap: 0.5rem;
 }
 
 .display {
-    white-space: nowrap;
-    overflow: auto;
-    position: relative;
+    margin-top: auto;
+    padding-right: 0.5rem;
+    padding-bottom: 0.5rem;
+    display: grid;
+    grid-template-columns: 1fr;
+}
+
+.scientific-buttons {
+    display: none;
 }
 
 p {
     white-space: nowrap;
+    overflow: auto; 
+    scrollbar-color: transparent black;
     font-size: 4rem;
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    padding-right: 0.5rem;
+    text-align: right;
+}
+
+.input {
+    grid-row: 3 / 4;
 }
 
 .output {
     display: none;
 }
 
-.show-result {
-    display: block;
-}
-
-.calculated {
-    color: rgb(141,141,147);
-    font-size: 2rem;
-    bottom: 5rem;
-}
-
-.basic {
+.basic-buttons {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr 1fr;
     gap: 0.5rem;
 }
 
+/* STYLING BUTTONS */
 button {
     border-radius: 50%;
     border-style: none;
@@ -102,6 +103,45 @@ button.orange:hover, button.orange:active, button.orange:focus {
 button.darkgrey:hover, button.grey:active, button.grey:focus {
     background-color: rgb(76, 76, 76);
     transition: 0.3s;
+}
+
+sub, sup {
+    font-size: 1rem;
+}
+
+/* AFTER PRESSING EQUAL SIGN */
+.show-result {
+    display: block;
+}
+
+.calculated {
+    color: rgb(141,141,147);
+    font-size: 2rem;
+    grid-row: inherit;
+}
+
+/* MODE SCIENTIFIC */
+.show-scientific {
+    grid-column: 1 / 2;
+    grid-row: 2 / 3;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 0.5rem;
+}
+
+.scientific-calculator {
+    aspect-ratio: 1 / 1;
+    grid-template-columns: 1fr 1fr;
+}
+
+.display-scientific {
+    grid-column: 1 / 3;
+    grid-row: 1 / 2;
+}
+
+.basic-scientific {
+    grid-column: 2 / 3;
+    grid-row: 2 / 3;
 }
 
 /* div {

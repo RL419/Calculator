@@ -59,6 +59,10 @@ p {
     gap: 0.5rem;
 }
 
+p sub, p sup {
+    font-size: 2rem;
+}
+
 /* STYLING BUTTONS */
 button {
     border-radius: 50%;
@@ -105,7 +109,7 @@ button.darkgrey:hover, button.grey:active, button.grey:focus {
     transition: 0.3s;
 }
 
-sub, sup {
+button sub, button sup {
     font-size: 1rem;
 }
 
@@ -118,6 +122,10 @@ sub, sup {
     color: rgb(141,141,147);
     font-size: 2rem;
     grid-row: inherit;
+}
+
+.calculated sub, .calculated sup {
+    font-size: 1rem;
 }
 
 /* MODE SCIENTIFIC */

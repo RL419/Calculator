@@ -1,8 +1,9 @@
-// Math
+// Calculator Functionality
 let currExpression = '';
-let unclosed_brackets = 0;
+let hasDecimal = [], unclosed_brackets = 0;
 let reset = false;
-let ifScientific = false;
+let MODE = 'BASIC';
+let answer = 0;
 
 
 // html divs
@@ -42,6 +43,73 @@ const equalButton = document.getElementById('equal');
 
 const changeModeButton = document.getElementById('mode');
 
+const eButton = document.getElementById('e');
+const piButton = document.getElementById('pi');
+const answerButton = document.getElementById('answer');
+
+const facotrialButton = document.getElementById('factorial');
+const percentButton = document.getElementById('percent');
+
+const log10Button = document.getElementById('log-10');
+const lnButton = document.getElementById('log-e');
+const sinButton = document.getElementById('sin');
+const cosButton = document.getElementById('cos');
+const tanButton = document.getElementById('tan');
+const acrsinButton = document.getElementById('arcsin');
+const arccosButton = document.getElementById('arccos');
+const arctanButton = document.getElementById('arctan');
+const squareRootButton = document.getElementById('square-root');
+
+const angleModeButton = document.getElementById('angle-mode');
+// const nthRootButton = document.getElementById('nth-root');
+
+
+// Variables
+const toDisplay = {
+    ['*'] : '&#215;', ['/'] : '&#247;',
+    e : '<i>e</i>', p : '&#960;', A : 'Ans',
+    ['s('] : 'sin(', ['c('] : 'cos(', ['t('] : 'tan(',
+    ['S('] : 'sin<sup>-1</sup>(', ['C('] : 'cos<sup>-1</sup>(',
+    ['T('] : 'tan<sup>-1</sup>(', ['g('] : 'log<sub>10</sub>(',
+    ['l('] : 'ln(', ['r'] : '&#8730;'
+}
+
+const CONSTANTS = {
+    e : Math.E,
+    p : Math.PI,
+    A : answer
+}
+
+const FUNCTIONS = {
+    s : (x) => {
+        x = angleModeButton.innerHTML === 'Deg' ? x * Math.PI / 180 : x;
+        return Math.sin(x);
+    },
+    c : (x) => {
+        x = angleModeButton.innerHTML === 'Deg' ? x * Math.PI / 180 : x;
+        return Math.cos(x);
+    },
+    t : (x) => {
+        x = angleModeButton.innerHTML === 'Deg' ? x * Math.PI / 180 : x;
+        return Math.tan(x);
+    },
+    S : (x) => {
+        return angleModeButton.innerHTML === 'Deg' ? Math.asin(x) / Math.PI * 180 : Math.asin(x);
+    },
+    C : (x) => {
+        return angleModeButton.innerHTML === 'Deg' ? Math.acos(x) / Math.PI * 180 : Math.acos(x);
+    },
+    T : (x) => {
+        return angleModeButton.innerHTML === 'Deg' ? Math.atan(x) / Math.PI * 180 : Math.atan(x);
+    },
+    g : Math.log10,
+    l : Math.log,
+    r : Math.sqrt,
+    // R : function(x, y) {
+    //     return Math.pow(x, 1/y);
+    // }
+}
+
 
 // Click event listeners for buttons
 divideButton.addEventListener('click', () => add_arithmatic('/'));
@@ -63,12 +131,31 @@ decimalButton.addEventListener('click', () => add_number('.'));
 
 backspaceButton.addEventListener('click', backspace);
 
-leftBracketButton.addEventListener('click', () => add_brackets('('))
-rightBracketButton.addEventListener('click', () => add_brackets(')'))
+leftBracketButton.addEventListener('click', () => add_brackets('('));
+rightBracketButton.addEventListener('click', () => add_brackets(')'));
 
-equalButton.addEventListener('click', equal)
+equalButton.addEventListener('click', equal);
 
 changeModeButton.addEventListener('click', changeMode);
+
+eButton.addEventListener('click', () => add_constant('e'));
+piButton.addEventListener('click', () => add_constant('p'));
+answerButton.addEventListener('click', () => add_constant('A'));
+
+facotrialButton.addEventListener('click', () => add_special_operation('!'));
+percentButton.addEventListener('click', () => add_special_operation('%'));
+
+log10Button.addEventListener('click', () => add_function('g'));
+lnButton.addEventListener('click', () => add_function('l'));
+sinButton.addEventListener('click', () => add_function('s'));
+cosButton.addEventListener('click', () => add_function('c'));
+tanButton.addEventListener('click', () => add_function('t'));
+acrsinButton.addEventListener('click', () => add_function('S'));
+arccosButton.addEventListener('click', () => add_function('C'));
+arctanButton.addEventListener('click', () => add_function('T'));
+squareRootButton.addEventListener('click', () => add_function('r'));
+
+angleModeButton.addEventListener('click', () => angleModeButton.innerHTML = angleModeButton.innerHTML === 'Deg' ? 'Rad' : 'Deg');
 
 
 // Keydown event listener for buttons
@@ -82,26 +169,39 @@ document.body.addEventListener('keydown', (event) => {
     } else if (event.key === 'Enter' || event.key === '=') {
         equal();
     } else if (event.key === '(' || event.key === ')') {
-        add_brackets(event.key)
+        add_brackets(event.key);
     }
 });
 
-// Functions
+// Dealing with inputs
 function add_number(number) {
     if (reset) {
         resetDisplay();
     }
-    if (currExpression.at(-1) === '.' && number === '.') {
-        backspace();
+
+    const last = currExpression.at(-1);
+    if (last === ')' || is_constant(last) || is_special_operation(last)) {
+        add_arithmatic('*');
     }
-    if (!currExpression && number !== '.') {
-        input.innerHTML = '';
+    
+    let decimal = hasDecimal.at(-1) || false;
+    if (number === '.') {
+        if (decimal) {
+            return;
+        } else {
+            decimal = true;
+        }
+        if (!last || is_arithmatic(last) || last === '(') {
+            add_number(0);
+        }
     }
+    
+    hasDecimal.push(decimal);
     currExpression += number;
-    input.innerHTML += number;
+    visualiseInput();
 }
 
-function add_arithmatic(operation) {
+function add_arithmatic(arithmatic) {
     if (reset) {
         resetDisplay();
     }
@@ -109,38 +209,76 @@ function add_arithmatic(operation) {
     if (last === '(') {
         return;
     }
-    if (is_arithmatic(last)) {
+    if (is_arithmatic(last) || last === '.') {
         backspace();
     }
 
-    if (operation === '-') {
-        if (!currExpression) {
-            input.innerHTML = '';
-        }
-        input.innerHTML += operation;
-        currExpression += operation;
-    } else {
-        if (operation === '*') {
-            input.innerHTML += '&#215;';
-        } else if (operation === '/') {
-            input.innerHTML += '&#247;';
-        } else {
-            input.innerHTML += operation;
-        }
-        currExpression += currExpression ? operation : '0' + operation;
+    if (!currExpression && arithmatic !== '-') {
+        add_number(0);
     }
+
+    hasDecimal.push(false);
+    currExpression += arithmatic;
+    visualiseInput();
 }
 
-function add_function() {
+function add_constant(symbol) {
     if (reset) {
         resetDisplay();
     }
+
+    const last = currExpression.at(-1);
+    if (last === ')' || is_number(last) || is_constant(last)) {
+        add_arithmatic('*');
+    }
+    
+    hasDecimal.push(false);
+    currExpression += symbol;
+    visualiseInput();
 }
 
-function add_special_operation() {
+function add_function(func) {
     if (reset) {
         resetDisplay();
     }
+    
+    const last = currExpression.at(-1);
+    if (last === ')' || is_number(last) || is_constant(last)) {
+        add_arithmatic('*');
+    }
+
+    hasDecimal.push(false);
+    currExpression += func;
+    add_brackets('(');
+    visualiseInput();
+}
+
+function add_special_operation(operation) {
+    if (reset) {
+        resetDisplay();
+    }
+    const last = currExpression.at(-1);
+    if (last === '(') {
+        return;
+    }
+    if (is_arithmatic(last) || last === '.' || is_special_operation(last)) {
+        backspace();
+    }
+
+    if (!currExpression && operation !== '-') {
+        add_number(0);
+    }
+
+    hasDecimal.push(false);
+    currExpression += operation;
+    visualiseInput();
+}
+
+function add_power() {
+    if (reset) {
+        resetDisplay();
+    }
+
 }
 
 function add_brackets(bracket) {
@@ -149,11 +287,8 @@ function add_brackets(bracket) {
     }
     const last = currExpression.at(-1);
     if (bracket === '(') {
-        if (is_number(last) || is_special_operation(last) || last === ')') {
+        if (!is_arithmatic(last) && last !== '(' && !is_function(last)) {
             add_arithmatic('*');
-        }
-        if (!currExpression) {
-            input.innerHTML = '';
         }
         unclosed_brackets ++;
     } else if (bracket === ')') {
@@ -165,8 +300,10 @@ function add_brackets(bracket) {
         }
         unclosed_brackets--;
     }
+    
+    hasDecimal.push(false);
     currExpression += bracket;
-    input.innerHTML += bracket;
+    visualiseInput();
 }
 
 function backspace() {
@@ -180,24 +317,37 @@ function backspace() {
 
     if (last === ')') {
         unclosed_brackets++;
-    }
-    if (last === '(') {
-        if (is_function(last)) {
-
+    } else if (last === '(') {
+        if (is_function(currExpression.at(-2))) {
+            currExpression = currExpression.slice(0, -1);
+            hasDecimal.pop();
         }
         unclosed_brackets--;
     }
 
-    input.innerHTML = input.innerHTML.slice(0, -1);
     currExpression = currExpression.slice(0, -1);
-    if (!input.innerHTML) {
-        input.innerHTML = '0';
-    }
+    hasDecimal.pop();
+    visualiseInput();
 }
 
+function visualiseInput() {
+    let curr_input = currExpression || '0';
+
+    for (let [from, to] of Object.entries(toDisplay)) {
+        curr_input = curr_input.replaceAll(from, to);
+    }
+
+    input.innerHTML = curr_input;
+}
+
+
+// Utility Functions
 function is_number(s) {
-    const digits = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.', 'e', 'pi'];
-    return digits.includes(s);
+    return ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.'].includes(s);
+}
+
+function is_constant(s) {
+    return Object.keys(CONSTANTS).includes(s);
 }
 
 function is_arithmatic(s) {
@@ -205,68 +355,111 @@ function is_arithmatic(s) {
 }
 
 function is_function(s) {
-    
+    return Object.keys(FUNCTIONS).includes(s);
 }
 
 function is_special_operation(s) {
-
+    return ['%', '!'].includes(s);
 }
 
+
+// Calculation Functions
 function total(array) {
-    let sum = 0;
-    array.forEach(element => {
-        sum += element
-    });
-    return sum;
+    if (!array) {
+        return 0;
+    }
+    while (array.length > 1) {
+        const pre = array.shift();
+        const curr = array.shift();
+        if (!pre.percent && curr.percent) {
+            array.unshift({num: pre.num * (1 + curr.num), percent: false})
+        } else {
+            array.unshift({num: pre.num + curr.num, percent: false})
+        }
+    }
+    return array[0].num;
 }
 
 function evaluate(expression) {
     const stack = [];
 
-    const performArithmatic = (arithmatic) => {
+    const performArithmatic = () => {
         if (arithmatic === '+') {
             stack.push(curNum);
         } else if (arithmatic === '-') {
-            stack.push(-curNum);
+            curNum.num = -curNum.num
+            stack.push(curNum);
         } else if (arithmatic === '*') {
-            stack.push(stack.pop() * curNum);
+            stack.push({num: stack.pop().num * curNum.num, percent:false});
         } else if (arithmatic === '/') {
-            stack.push(stack.pop() / curNum);
+            raiseError = curNum === 0;
+            stack.push({num: stack.pop().num / curNum.num, percent:false});
         }
-        curNum = null;
+        curNum = {num: null, percent:false};
     }
     
     let start = 0, end = 0, arithmatic = '+';
-    let curNum = null;
+    let curNum = {num: null, percent:false};
+    let raiseError = false, func = null;
 
     while (end < expression.length) {
-        if (is_arithmatic(expression[end])) {
-            if (!curNum) {
-                curNum = Number(expression.slice(start, end));
+        if (raiseError) {
+            return {sum: 'Error', endIndex:-1}
+        }
+
+        if (is_constant(expression[end])) {
+            curNum.num = CONSTANTS[expression[end]];
+        } else if (is_special_operation(expression[end])) {
+            if (curNum.num === null) {
+                curNum.num = Number(expression.slice(start, end));
             }
-            performArithmatic(arithmatic);
+            if (expression[end] === '%') {
+                curNum.num /= 100;
+                curNum.percent = true;
+            } else if (expression[end] === '!') {
+                if (Math.floor(curNum.num) != curNum.num || curNum.num < 0) {
+                    raiseError = true;
+                } else {
+                    for (let i = curNum.num - 1; i > 0; i--) {
+                        curNum.num *= i;
+                    }
+                }
+            }
+        } else if (is_function(expression[end])) {
+            func = expression[end];
+        } else if (is_arithmatic(expression[end])) {
+            if (curNum.num === null) {
+                curNum.num = Number(expression.slice(start, end));
+            }
+            performArithmatic();
             arithmatic = expression[end];
             start = end + 1;
         } else if (expression[end] === '(') {
             const {sum, endIndex} = evaluate(expression.slice(end+1));
+            if (sum === 'Error') {
+                return {sum, endIndex};
+            }
             end += endIndex;
             start = end + 1;
-            curNum = sum;
+            curNum.num = func? FUNCTIONS[func](sum) : sum;
+            func = null;
         } else if (expression[end] === ')') {
-            if (!curNum) {
-                curNum = Number(expression.slice(start, end));
+            if (curNum.num === null) {
+                curNum.num = Number(expression.slice(start, end));
             }
-            performArithmatic(arithmatic);
-            const sum = total(stack);
-            return {sum, endIndex : end+1}
+            performArithmatic();
+            return {sum:total(stack), endIndex : end+1};
         }
         end++;
     }
 
-    if (!curNum) {
-        curNum = Number(expression.slice(start, end));
+    if (curNum.num === null) {
+        curNum.num = Number(expression.slice(start, end));
     }
-    performArithmatic(arithmatic);
+    performArithmatic();
+    if (raiseError) {
+        return {sum: 'Error', endIndex:-1};
+    }
     return {
         sum: total(stack),
         endIndex: end
@@ -283,30 +476,33 @@ function equal() {
     output.classList.add('show-result');
     input.classList.add('calculated');
     reset = true;
+    answer = sum;
 }
 
+
+// Functions for Changing the Display
 function resetDisplay() {
     input.classList.remove('calculated');
     output.classList.remove('show-result')
     currExpression = '';
     unclosed_brackets = 0;
-    input.innerHTML = '0';
+    hasDecimal = [];
     reset = false;
+    visualiseInput();
 }
 
-
 function changeMode () {
-    if (!ifScientific) {
+    if (MODE === 'BASIC') {
         main.classList.add('scientific-calculator');
         display.classList.add('display-scientific');
         basic.classList.add('basic-scientific');
         scientific.classList.add('show-scientific');
-        ifScientific = true;
+        MODE = 'SCIENTIFIC';
     } else {
         main.classList.remove('scientific-calculator');
         display.classList.remove('display-scientific');
         basic.classList.remove('basic-scientific');
         scientific.classList.remove('show-scientific');
-        ifScientific = false;
+        MODE = 'BASIC';
     }
 }

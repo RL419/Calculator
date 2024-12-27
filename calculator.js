@@ -4,6 +4,8 @@ let hasDecimal = [], unclosed_brackets = 0;
 let reset = false;
 let MODE = 'BASIC';
 let answer = 0;
+let sup_sub = [], exitSupSub = [];
+
 
 
 // html divs
@@ -49,6 +51,7 @@ const answerButton = document.getElementById('answer');
 
 const facotrialButton = document.getElementById('factorial');
 const percentButton = document.getElementById('percent');
+const squaredButton = document.getElementById('squared');
 
 const log10Button = document.getElementById('log-10');
 const lnButton = document.getElementById('log-e');
@@ -61,7 +64,10 @@ const arctanButton = document.getElementById('arctan');
 const squareRootButton = document.getElementById('square-root');
 
 const angleModeButton = document.getElementById('angle-mode');
-// const nthRootButton = document.getElementById('nth-root');
+
+const nthRootButton = document.getElementById('nth-root');
+const powerButton = document.getElementById('power');
+const logyButton = document.getElementById('log-y');
 
 
 // Variables
@@ -71,7 +77,9 @@ const toDisplay = {
     ['s('] : 'sin(', ['c('] : 'cos(', ['t('] : 'tan(',
     ['S('] : 'sin<sup>-1</sup>(', ['C('] : 'cos<sup>-1</sup>(',
     ['T('] : 'tan<sup>-1</sup>(', ['g('] : 'log<sub>10</sub>(',
-    ['l('] : 'ln(', ['r'] : '&#8730;'
+    ['l('] : 'ln(', r : '&#8730;', q : '<sup>2</sup>',
+    ['['] : '<sup>', [']'] : '</sup>', ['{'] : '<sup><sup>',
+    ['}'] : '</sup></sup>&#8730;', ['_'] : 'log<sub>', ['|'] : '</sub>'
 }
 
 const CONSTANTS = {
@@ -104,10 +112,30 @@ const FUNCTIONS = {
     },
     g : Math.log10,
     l : Math.log,
-    r : Math.sqrt,
-    // R : function(x, y) {
-    //     return Math.pow(x, 1/y);
-    // }
+    r : Math.sqrt
+}
+
+const SPECIAL_OPERATION = {
+    ['%'] : obj => {
+        obj.num /= 100,
+        obj.percent = true
+    },
+    ['!'] : obj => {
+        if (Math.floor(obj.num) != obj.num || obj.num < 0) {
+            obj.num = NaN;
+        } else {
+            for (let i = obj.num - 1; i > 0; i--) {
+                obj.num *= i;
+            }
+        }
+    },
+    q : obj => {obj.num **= 2}
+}
+
+const CLOSE_WITH = {
+    ['['] : ']',
+    ['{'] : '}',
+    ['_'] : '|'
 }
 
 
@@ -144,6 +172,7 @@ answerButton.addEventListener('click', () => add_constant('A'));
 
 facotrialButton.addEventListener('click', () => add_special_operation('!'));
 percentButton.addEventListener('click', () => add_special_operation('%'));
+squaredButton.addEventListener('click', () => add_special_operation('q'));
 
 log10Button.addEventListener('click', () => add_function('g'));
 lnButton.addEventListener('click', () => add_function('l'));
@@ -156,6 +185,63 @@ arctanButton.addEventListener('click', () => add_function('T'));
 squareRootButton.addEventListener('click', () => add_function('r'));
 
 angleModeButton.addEventListener('click', () => angleModeButton.innerHTML = angleModeButton.innerHTML === 'Deg' ? 'Rad' : 'Deg');
+
+powerButton.addEventListener('click', () => {
+    if (reset) {
+        resetDisplay();
+    }
+    const last = currExpression.at(-1);
+    if (last === '(' || last === '[' || last === ']') {
+        return;
+    }
+    if (is_arithmatic(last) || last === '.') {
+        backspace();
+    }
+
+    if (!currExpression) {
+        add_number(0);
+    }
+
+    hasDecimal.push(false);
+    currExpression += '[';
+    sup_sub.push('[');
+    exitSupSub.push(0);
+    visualiseInput();
+});
+
+nthRootButton.addEventListener('click', () => {
+    if (reset) {
+        resetDisplay();
+    }
+
+    const last = currExpression.at(-1);
+    if (currExpression && !is_arithmatic(last) && last !== '(' && !Object.keys(CLOSE_WITH).includes(last)) {
+        add_arithmatic('*');
+    }
+    hasDecimal.push(false);
+    currExpression += '{';
+    sup_sub.push('{');
+    exitSupSub.push(0);
+    add_brackets('(');
+    visualiseInput();
+});
+
+logyButton.addEventListener('click', () => {
+    if (reset) {
+        resetDisplay();
+    }
+
+    const last = currExpression.at(-1);
+    if (currExpression && !is_arithmatic(last) && last !== '(' && !Object.keys(CLOSE_WITH).includes(last)) {
+        add_arithmatic('*');
+    }
+    hasDecimal.push(false);
+    currExpression += '_';
+    sup_sub.push('_');
+    exitSupSub.push(0);
+    add_brackets('(');
+    visualiseInput();
+});
 
 
 // Keydown event listener for buttons
@@ -180,7 +266,7 @@ function add_number(number) {
     }
 
     const last = currExpression.at(-1);
-    if (last === ')' || is_constant(last) || is_special_operation(last)) {
+    if (last === ')' || is_constant(last) || is_special_operation(last) || Object.values(CLOSE_WITH).includes(last)) {
         add_arithmatic('*');
     }
     
@@ -191,7 +277,7 @@ function add_number(number) {
         } else {
             decimal = true;
         }
-        if (!last || is_arithmatic(last) || last === '(') {
+        if (!last || is_arithmatic(last) || last === '(' || Object.keys(CLOSE_WITH).includes(last)) {
             add_number(0);
         }
     }
@@ -205,12 +291,21 @@ function add_arithmatic(arithmatic) {
     if (reset) {
         resetDisplay();
     }
+
     const last = currExpression.at(-1);
-    if (last === '(') {
+
+    if (last === '(' && arithmatic !== '-') {
         return;
     }
-    if (is_arithmatic(last) || last === '.') {
+    if (is_arithmatic(last) || last === '.' || (Object.keys(CLOSE_WITH).includes(last) && arithmatic !== '-')) {
         backspace();
+    }
+
+    while (sup_sub.length && !exitSupSub.at(-1) && !Object.keys(CLOSE_WITH).includes(last)) {
+        const open = sup_sub.pop();
+        exitSupSub.pop();
+        currExpression += CLOSE_WITH[open];
+        hasDecimal.push(false);
     }
 
     if (!currExpression && arithmatic !== '-') {
@@ -228,7 +323,7 @@ function add_constant(symbol) {
     }
 
     const last = currExpression.at(-1);
-    if (last === ')' || is_number(last) || is_constant(last)) {
+    if (currExpression && !is_arithmatic(last) && last !== '(' && !Object.keys(CLOSE_WITH).includes(last)) {
         add_arithmatic('*');
     }
     
@@ -243,7 +338,7 @@ function add_function(func) {
     }
     
     const last = currExpression.at(-1);
-    if (last === ')' || is_number(last) || is_constant(last)) {
+    if (currExpression && !is_arithmatic(last) && last !== '(' && !Object.keys(CLOSE_WITH).includes(last)) {
         add_arithmatic('*');
     }
 
@@ -258,14 +353,14 @@ function add_special_operation(operation) {
         resetDisplay();
     }
     const last = currExpression.at(-1);
-    if (last === '(') {
+    if (last === '(' || Object.values(CLOSE_WITH).includes(last)) {
         return;
     }
-    if (is_arithmatic(last) || last === '.' || is_special_operation(last)) {
+    if (is_arithmatic(last) || last === '.' || is_special_operation(last) || Object.keys(CLOSE_WITH).includes(last)) {
         backspace();
     }
 
-    if (!currExpression && operation !== '-') {
+    if (!currExpression) {
         add_number(0);
     }
 
@@ -274,35 +369,47 @@ function add_special_operation(operation) {
     visualiseInput();
 }
 
-function add_power() {
-    if (reset) {
-        resetDisplay();
-    }
-
-}
-
 function add_brackets(bracket) {
     if (reset) {
         resetDisplay();
     }
     const last = currExpression.at(-1);
     if (bracket === '(') {
-        if (!is_arithmatic(last) && last !== '(' && !is_function(last)) {
+        if (!is_arithmatic(last) && last !== '(' && !is_function(last) && !Object.keys(CLOSE_WITH).includes(last) && last !== '}' && last !== '|') {
             add_arithmatic('*');
         }
         unclosed_brackets ++;
+        if (sup_sub.length) {
+            exitSupSub[exitSupSub.length-1]++;
+        }
     } else if (bracket === ')') {
         if (unclosed_brackets <= 0 || last === '(') {
             return;
         }
-        if (is_arithmatic(last)) {
+        if (is_arithmatic(last) || Object.keys(CLOSE_WITH).includes(last)) {
             backspace();
         }
         unclosed_brackets--;
+        while (sup_sub.length && !exitSupSub.at(-1)) {
+            const open = sup_sub.pop();
+            exitSupSub.pop();
+            currExpression += CLOSE_WITH[open];
+            hasDecimal.push(false);
+        }
+        if (exitSupSub.at(-1)) {
+            exitSupSub[exitSupSub.length-1]--;
+        }
     }
     
     hasDecimal.push(false);
     currExpression += bracket;
+    if ((sup_sub.at(-1) === '{' || sup_sub.at(-1) === '_') && !exitSupSub.at(-1)) {
+        const open = sup_sub.pop();
+        exitSupSub.pop();
+        currExpression += CLOSE_WITH[open];
+        hasDecimal.push(false);
+        add_brackets('(');    
+    }
     visualiseInput();
 }
 
@@ -313,25 +420,54 @@ function backspace() {
     if (!currExpression) {
         return;
     }
+
     const last = currExpression.at(-1);
+    let second_last = currExpression.at(-2);
+
+    if (Object.keys(CLOSE_WITH).includes(last)) {
+        sup_sub.pop();
+    }
 
     if (last === ')') {
+        if (sup_sub.length) {
+            exitSupSub[exitSupSub.length-1]++;
+        }
         unclosed_brackets++;
     } else if (last === '(') {
-        if (is_function(currExpression.at(-2))) {
+        if (is_function(second_last)) {
             currExpression = currExpression.slice(0, -1);
             hasDecimal.pop();
+        }
+        if (sup_sub.length) {
+            exitSupSub[exitSupSub.length-1]--;
         }
         unclosed_brackets--;
     }
 
     currExpression = currExpression.slice(0, -1);
     hasDecimal.pop();
+
+    while (Object.values(CLOSE_WITH).includes(second_last)) {
+        sup_sub.push(Object.keys(CLOSE_WITH)[Object.values(CLOSE_WITH).indexOf(second_last)]);
+        exitSupSub.push(0)
+        currExpression = currExpression.slice(0, -1);
+        hasDecimal.pop();
+        second_last = currExpression.at(-1);
+    }
+
+    if ((sup_sub.at(-1) === '{' || sup_sub.at(-1) === '_') && second_last === ')') {
+        backspace();
+    }
+
     visualiseInput();
 }
 
 function visualiseInput() {
     let curr_input = currExpression || '0';
+
+    for (let i = 1; i <= sup_sub.length;i++) {
+        curr_input += CLOSE_WITH[sup_sub.at(-i)];
+    }
 
     for (let [from, to] of Object.entries(toDisplay)) {
         curr_input = curr_input.replaceAll(from, to);
@@ -359,13 +495,13 @@ function is_function(s) {
 }
 
 function is_special_operation(s) {
-    return ['%', '!'].includes(s);
+    return ['%', '!', 'q'].includes(s);
 }
 
 
 // Calculation Functions
 function total(array) {
-    if (!array) {
+    if (!array.length) {
         return 0;
     }
     while (array.length > 1) {
@@ -383,6 +519,10 @@ function total(array) {
 function evaluate(expression) {
     const stack = [];
 
+    let start = 0, end = 0, arithmatic = '+';
+    let curNum = {num: null, percent:false};
+    let func = null;
+
     const performArithmatic = () => {
         if (arithmatic === '+') {
             stack.push(curNum);
@@ -392,74 +532,62 @@ function evaluate(expression) {
         } else if (arithmatic === '*') {
             stack.push({num: stack.pop().num * curNum.num, percent:false});
         } else if (arithmatic === '/') {
-            raiseError = curNum === 0;
             stack.push({num: stack.pop().num / curNum.num, percent:false});
         }
         curNum = {num: null, percent:false};
     }
-    
-    let start = 0, end = 0, arithmatic = '+';
-    let curNum = {num: null, percent:false};
-    let raiseError = false, func = null;
 
     while (end < expression.length) {
-        if (raiseError) {
-            return {sum: 'Error', endIndex:-1}
-        }
+        let curr = expression[end];
 
-        if (is_constant(expression[end])) {
-            curNum.num = CONSTANTS[expression[end]];
-        } else if (is_special_operation(expression[end])) {
-            if (curNum.num === null) {
-                curNum.num = Number(expression.slice(start, end));
-            }
-            if (expression[end] === '%') {
-                curNum.num /= 100;
-                curNum.percent = true;
-            } else if (expression[end] === '!') {
-                if (Math.floor(curNum.num) != curNum.num || curNum.num < 0) {
-                    raiseError = true;
-                } else {
-                    for (let i = curNum.num - 1; i > 0; i--) {
-                        curNum.num *= i;
-                    }
-                }
-            }
-        } else if (is_function(expression[end])) {
-            func = expression[end];
-        } else if (is_arithmatic(expression[end])) {
-            if (curNum.num === null) {
-                curNum.num = Number(expression.slice(start, end));
-            }
+        if (is_constant(curr)) {
+            curNum.num = CONSTANTS[curr];
+        } else if (is_special_operation(curr)) {
+            curNum.num = curNum.num === null ? Number(expression.slice(start, end)) : curNum.num;
+            SPECIAL_OPERATION[curr](curNum);
+        } else if (is_function(curr)) {
+            func = curr;
+        } else if (is_arithmatic(curr)) {
+            curNum.num = curNum.num === null ? Number(expression.slice(start, end)) : curNum.num;
             performArithmatic();
-            arithmatic = expression[end];
+            arithmatic = curr;
             start = end + 1;
-        } else if (expression[end] === '(') {
+        } else if (curr === '(') {
             const {sum, endIndex} = evaluate(expression.slice(end+1));
-            if (sum === 'Error') {
-                return {sum, endIndex};
-            }
             end += endIndex;
             start = end + 1;
             curNum.num = func? FUNCTIONS[func](sum) : sum;
             func = null;
-        } else if (expression[end] === ')') {
-            if (curNum.num === null) {
-                curNum.num = Number(expression.slice(start, end));
-            }
+        } else if (curr === ')' || Object.values(CLOSE_WITH).includes(curr)) {
+            curNum.num = curNum.num === null ? Number(expression.slice(start, end)) : curNum.num;
             performArithmatic();
             return {sum:total(stack), endIndex : end+1};
+        } else if (curr === '[') {
+            curNum.num = curNum.num === null ? Number(expression.slice(start, end)) : curNum.num;
+            const {sum, endIndex} = evaluate(expression.slice(end+1));
+            end += endIndex;
+            start = end + 1;
+            curNum.num **= sum;
+        } else if (curr === '{') {
+            const {sum : y, endIndex} = evaluate(expression.slice(end+1));
+            end += endIndex;
+            const {sum : x, endIndex : end2} = evaluate(expression.slice(end+2));
+            end += end2 + 1;
+            start = end + 1;
+            curNum.num = x ** (1/y);
+        } else if (curr === '_') {
+            const {sum : y, endIndex} = evaluate(expression.slice(end+1));
+            end += endIndex;
+            const {sum : x, endIndex : end2} = evaluate(expression.slice(end+2));
+            end += end2 + 1;
+            start = end + 1;
+            curNum.num = Math.log(x) / Math.log(y);
         }
         end++;
     }
 
-    if (curNum.num === null) {
-        curNum.num = Number(expression.slice(start, end));
-    }
+    curNum.num = curNum.num === null ? Number(expression.slice(start, end)) : curNum.num;
     performArithmatic();
-    if (raiseError) {
-        return {sum: 'Error', endIndex:-1};
-    }
     return {
         sum: total(stack),
         endIndex: end
@@ -472,7 +600,7 @@ function equal() {
     }
     currExpression = currExpression.padEnd(currExpression.length + unclosed_brackets, ')');
     const {sum, endIndex} = evaluate(currExpression);
-    output.innerHTML = sum;
+    output.innerHTML = (isFinite(sum) && !isNaN(sum)) ? sum : 'Error';
     output.classList.add('show-result');
     input.classList.add('calculated');
     reset = true;
@@ -488,6 +616,8 @@ function resetDisplay() {
     unclosed_brackets = 0;
     hasDecimal = [];
     reset = false;
+    sup_sub = [];
+    exitSupSub = [];
     visualiseInput();
 }
 
